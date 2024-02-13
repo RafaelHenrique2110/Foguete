@@ -1,10 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using UnityEngine;
 
+using UnityEngine;
+enum State { on, off }
 public class Foguete : MonoBehaviour
 {
+   [SerializeField] State state;
    [SerializeField] GameObject compartment;
    [SerializeField] float fuel;
    [SerializeField] float speed;
@@ -12,6 +11,8 @@ public class Foguete : MonoBehaviour
    [SerializeField] ParticleSystem fire;
    [SerializeField] LayerMask layerMask;
    [SerializeField] float windForce;
+   [SerializeField] AudioSource audio;
+
    public float rotationSpeed = 1f; // Velocidade de rotação do foguete
    public float maxRotationAngle = 45f;
    Rigidbody compartmentRB;
@@ -27,14 +28,28 @@ public class Foguete : MonoBehaviour
    private void Update()
    {
 
-      if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, 50f, layerMask))
+      Checker();
+      
+
+   }
+   public void Checker()
+   {
+      if(Input.GetKeyDown(KeyCode.Space)){
+         state = State.on;
+         rocketRB.useGravity=true;
+         compartmentRB.useGravity= true;
+          audio.Play();
+          fire.Play();
+
+      }
+
+      if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, 100f, layerMask))
       {
          Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
          OpenParachute();
       }
 
-
-      if (fuel > 0)
+      if (fuel > 0 && state == State.on)
       {
 
          Move(new Vector3(windForce, 0, speed));
@@ -44,6 +59,7 @@ public class Foguete : MonoBehaviour
       else
       {
          fire.Stop();
+         audio.Stop();
          if (rocketRB.velocity.y < 0)
          {
             ReleaseCompartment();
@@ -53,15 +69,12 @@ public class Foguete : MonoBehaviour
          }
       }
 
-
-
-
-
-
    }
+
 
    void ReleaseCompartment()
    {
+       
       compartmentRB.isKinematic = false;
       compartmentRB.AddForce(Vector3.right);
 
@@ -85,6 +98,7 @@ public class Foguete : MonoBehaviour
    void OpenParachute()
    {
       Parachute.SetActive(true);
+     
       parachuteRB.drag = 20;
 
 
